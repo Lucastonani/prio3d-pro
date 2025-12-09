@@ -1,0 +1,676 @@
+
+<!DOCTYPE html>
+
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<title>Priorizador 3D Pro</title>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<link href="css/style.css" rel="stylesheet"/>
+<link href="manifest.json" rel="manifest"/></head>
+<body>
+<div class="app-shell">
+<header>
+<div class="title-block">
+<h1>Priorizador 3D Pro</h1>
+<p>
+          Um painel simples para tirar sua mente do caos e decidir, com clareza,
+          o que merece sua atenção agora, hoje ou nunca.
+        </p>
+</div>
+<div class="summary-chip">
+<span class="summary-dot"></span>
+<span><strong id="summary-total">0</strong> tarefas</span>
+<span>•</span>
+<span><strong id="summary-high">0</strong> críticas (vermelho)</span>
+</div>
+</header>
+<main>
+<!-- Coluna esquerda: formulário -->
+<section class="card">
+<div class="card-header">
+<div>
+<div class="card-title">
+<span class="card-icon">⚙</span>
+              Configurar tarefa
+            </div>
+<div class="card-subtitle">
+              Atribua notas rápidas para esforço, retorno e impacto.
+            </div>
+</div>
+<div class="badge-soft">Escala 0–5 • 0 = baixo, 5 = alto</div>
+</div>
+<form autocomplete="off" id="task-form">
+<input id="task-id" type="hidden"/>
+<div class="field">
+<label>
+<span class="main">Nome da tarefa</span>
+</label>
+<input id="task-name" placeholder="Ex.: Follow-up de clientes de 30 dias" required="" type="text"/>
+</div>
+<div class="field">
+<label>
+<span class="main">Categoria</span>
+<small>Ex.: Trabalho, Estudos, Saúde, Projeto pessoal…</small>
+</label>
+<input id="task-category" list="category-suggestions" placeholder="Ex.: Trabalho • Vendas" type="text"/>
+<datalist id="category-suggestions">
+<option value="Trabalho"></option>
+<option value="Trabalho • Vendas"></option>
+<option value="Trabalho • Administrativo"></option>
+<option value="Estudos"></option>
+<option value="Projetos"></option>
+<option value="Pessoal"></option>
+<option value="Saúde"></option>
+<option value="Financeiro"></option>
+</datalist>
+</div>
+<div class="helper-row">
+<span>
+<strong>Retorno</strong> e <strong>Impacto</strong>: quanto essa tarefa ajuda ou prejudica?
+            </span>
+<span class="scale-chip">0 = nada • 5 = muito</span>
+</div>
+<div class="field-row">
+<div class="field">
+<label>
+<span class="main">Retorno financeiro</span>
+<small>Venda, comissão, redução de custo.</small>
+</label>
+<input id="score-retorno" max="5" min="0" required="" step="1" type="number" value="0"/>
+</div>
+<div class="field">
+<label>
+<span class="main">Retorno estratégico</span>
+<small>Constrói futuro? Sistema, relacionamento, aprendizado.</small>
+</label>
+<input id="score-estrategico" max="5" min="0" required="" step="1" type="number" value="0"/>
+</div>
+</div>
+<div class="field-row">
+<div class="field">
+<label>
+<span class="main">Impacto de não fazer</span>
+<small>O quanto dói se você adiar ou ignorar.</small>
+</label>
+<input id="score-impacto" max="5" min="0" required="" step="1" type="number" value="0"/>
+</div>
+<div class="field">
+<label>
+<span class="main">Urgência real</span>
+<small>Prazo, dependências, consequências.</small>
+</label>
+<input id="score-urgencia" max="5" min="0" required="" step="1" type="number" value="0"/>
+</div>
+</div>
+<div class="helper-row">
+<span>
+<strong>Esforço</strong> e <strong>Energia</strong>: aqui é o contrário: quanto maior, pior.
+            </span>
+<span class="scale-chip">0 = leve • 5 = pesado</span>
+</div>
+<div class="field-row">
+<div class="field">
+<label>
+<span class="main">Esforço necessário</span>
+<small>Tempo e complexidade.</small>
+</label>
+<input id="score-esforco" max="5" min="0" required="" step="1" type="number" value="0"/>
+</div>
+<div class="field">
+<label>
+<span class="main">Energia emocional</span>
+<small>Desgaste, fricção, resistência.</small>
+</label>
+<input id="score-energia" max="5" min="0" required="" step="1" type="number" value="0"/>
+</div>
+</div>
+<div class="buttons-row">
+<button class="btn-secondary" id="btn-clear" type="button">
+              Limpar
+            </button>
+<button class="btn-primary" id="btn-submit" type="submit">
+              Salvar tarefa
+            </button>
+</div>
+<div class="edit-indicator" id="edit-indicator" style="display:none;">
+            Modo edição ativo. Clique em "Limpar" para cancelar.
+          </div>
+</form>
+</section>
+<!-- Coluna direita: filtros, dashboard e lista -->
+<section class="card">
+<div class="card-header">
+<div>
+<div class="card-title">
+<span class="card-icon">📊</span>
+              Painel de prioridades
+            </div>
+<div class="card-subtitle">
+              Filtre por categoria, prioridade ou texto e veja onde focar primeiro.
+            </div>
+</div>
+<button class="btn-ghost btn-small" id="btn-clear-filters" type="button">
+            Limpar filtros
+          </button>
+</div>
+<div class="filters-row">
+<div class="field">
+<div class="filter-label">Busca</div>
+<input id="filter-search" placeholder="Filtrar por nome ou categoria…" type="search"/>
+</div>
+<div class="field">
+<div class="filter-label">Categoria</div>
+<select id="filter-category">
+<option value="todas">Todas</option>
+</select>
+</div>
+<div class="field">
+<div class="filter-label">Prioridade</div>
+<select id="filter-priority">
+<option value="todas">Todas</option>
+<option value="vermelho">Alta (vermelho)</option>
+<option value="amarelo">Média (amarelo)</option>
+<option value="verde">Baixa (verde)</option>
+<option value="cinza">Descartar (cinza)</option>
+</select>
+</div>
+</div>
+<div class="dashboard">
+<div class="dash-card">
+<div class="dash-label">Total de tarefas</div>
+<div class="dash-value" id="dash-total">0</div>
+<div class="dash-pill">Mapa geral</div>
+</div>
+<div class="dash-card">
+<div class="dash-label">Críticas (vermelho)</div>
+<div class="dash-value" id="dash-high">0</div>
+<div class="dash-pill">
+<span class="tag-dot red"></span>
+              Fazer agora
+            </div>
+</div>
+<div class="dash-card">
+<div class="dash-label">Hoje / amanhã</div>
+<div class="dash-value" id="dash-medium">0</div>
+<div class="dash-pill">
+<span class="tag-dot yellow"></span>
+              Planejar
+            </div>
+</div>
+<div class="dash-card">
+<div class="dash-label">Baixa / descartar</div>
+<div class="dash-value" id="dash-low">0</div>
+<div class="dash-pill">
+<span class="tag-dot green"></span>
+              Agendar / eliminar
+            </div>
+</div>
+</div>
+<div class="table-wrapper">
+<div class="empty-state" id="empty-state">
+            🧠 Nenhuma tarefa ainda.<br/>
+            Comece cadastrando algo na coluna da esquerda.
+          </div>
+<table id="tasks-table" style="display:none;">
+<thead>
+<tr>
+<th class="col-task">Tarefa</th>
+<th>Prioridade</th>
+<th>Nota</th>
+<th>Dimensões</th>
+<th></th>
+</tr>
+</thead>
+<tbody id="tasks-body"></tbody>
+</table>
+</div>
+</section>
+</main>
+</div>
+<script>
+    (function() {
+      const STORAGE_KEY = "prio3d_pro_tasks_v1";
+
+      const state = {
+        tasks: [],
+        filters: {
+          search: "",
+          category: "todas",
+          priority: "todas",
+        },
+        editingTaskId: null,
+      };
+
+      function loadTasks() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) return [];
+          const parsed = JSON.parse(raw);
+          if (!Array.isArray(parsed)) return [];
+          return parsed;
+        } catch (e) {
+          console.error("Erro ao carregar tarefas:", e);
+          return [];
+        }
+      }
+
+      function saveTasks() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state.tasks));
+        } catch (e) {
+          console.error("Erro ao salvar tarefas:", e);
+        }
+      }
+
+      function parseIntField(id) {
+        const el = document.getElementById(id);
+        const val = parseInt(el.value, 10);
+        if (isNaN(val)) return 0;
+        return Math.min(5, Math.max(0, val));
+      }
+
+      function calculatePriority(task) {
+        const retorno = task.retorno;
+        const estrategico = task.estrategico;
+        const impacto = task.impacto;
+        const urgencia = task.urgencia;
+        const esforco = task.esforco;
+        const energia = task.energia;
+
+        const positiveBlock = retorno + estrategico + impacto + urgencia;
+        const effortBlock = 10 - (esforco + energia);
+        const raw = (positiveBlock + effortBlock) / 2;
+        const score = Math.round(raw * 10) / 10;
+
+        let level, label, className;
+        if (score >= 7.5) {
+          level = "vermelho";
+          label = "Alta (vermelho)";
+          className = "priority-pill priority-vermelho";
+        } else if (score >= 5) {
+          level = "amarelo";
+          label = "Média (amarelo)";
+          className = "priority-pill priority-amarelo";
+        } else if (score >= 3) {
+          level = "verde";
+          label = "Baixa (verde)";
+          className = "priority-pill priority-verde";
+        } else {
+          level = "cinza";
+          label = "Descartar (cinza)";
+          className = "priority-pill priority-cinza";
+        }
+
+        return { score, level, label, className };
+      }
+
+      function renderSummary() {
+        const totalEl = document.getElementById("summary-total");
+        const highEl = document.getElementById("summary-high");
+
+        const total = state.tasks.length;
+        const high = state.tasks.filter(
+          (t) => calculatePriority(t).level === "vermelho"
+        ).length;
+
+        totalEl.textContent = String(total);
+        highEl.textContent = String(high);
+      }
+
+      function renderDashboard() {
+        const dashTotal = document.getElementById("dash-total");
+        const dashHigh = document.getElementById("dash-high");
+        const dashMedium = document.getElementById("dash-medium");
+        const dashLow = document.getElementById("dash-low");
+
+        const total = state.tasks.length;
+        let high = 0, medium = 0, lowOrDiscard = 0;
+
+        state.tasks.forEach((t) => {
+          const p = calculatePriority(t);
+          if (p.level === "vermelho") high++;
+          else if (p.level === "amarelo") medium++;
+          else lowOrDiscard++;
+        });
+
+        dashTotal.textContent = String(total);
+        dashHigh.textContent = String(high);
+        dashMedium.textContent = String(medium);
+        dashLow.textContent = String(lowOrDiscard);
+      }
+
+      function getFilteredTasks() {
+        const search = state.filters.search.trim().toLowerCase();
+        const category = state.filters.category;
+        const priority = state.filters.priority;
+
+        return state.tasks.filter((task) => {
+          if (search) {
+            const hay = (task.name + " " + (task.category || "")).toLowerCase();
+            if (!hay.includes(search)) return false;
+          }
+
+          if (category !== "todas" && (task.category || "") !== category) {
+            return false;
+          }
+
+          if (priority !== "todas") {
+            const p = calculatePriority(task);
+            if (p.level !== priority) return false;
+          }
+
+          return true;
+        });
+      }
+
+      function renderTasks() {
+        const emptyEl = document.getElementById("empty-state");
+        const table = document.getElementById("tasks-table");
+        const tbody = document.getElementById("tasks-body");
+
+        if (state.tasks.length === 0) {
+          emptyEl.style.display = "block";
+          table.style.display = "none";
+          tbody.innerHTML = "";
+          return;
+        } else {
+          emptyEl.style.display = "none";
+          table.style.display = "";
+        }
+
+        const tasks = getFilteredTasks();
+        tasks.sort((a, b) => {
+          const pa = calculatePriority(a);
+          const pb = calculatePriority(b);
+          if (pb.score !== pa.score) {
+            return pb.score - pa.score;
+          }
+          return new Date(b.createdAt) - new Date(a.createdAt);
+        });
+
+        tbody.innerHTML = "";
+
+        tasks.forEach((task) => {
+          const prio = calculatePriority(task);
+          const tr = document.createElement("tr");
+
+          const tdTask = document.createElement("td");
+          tdTask.className = "col-task";
+          const nameDiv = document.createElement("div");
+          nameDiv.className = "task-name";
+          nameDiv.textContent = task.name;
+
+          const metaDiv = document.createElement("div");
+          metaDiv.className = "task-meta";
+          const parts = [];
+          if (task.category) parts.push(task.category);
+          if (task.createdAt) {
+            const date = new Date(task.createdAt);
+            parts.push("Criada em " + date.toLocaleDateString("pt-BR"));
+          }
+          metaDiv.textContent = parts.join(" • ");
+
+          tdTask.appendChild(nameDiv);
+          tdTask.appendChild(metaDiv);
+          tr.appendChild(tdTask);
+
+          const tdPriority = document.createElement("td");
+          const prioritySpan = document.createElement("span");
+          prioritySpan.className = prio.className;
+          const dot = document.createElement("span");
+          dot.className = "pill-dot";
+          const labelSpan = document.createElement("span");
+          labelSpan.textContent = prio.label;
+          prioritySpan.appendChild(dot);
+          prioritySpan.appendChild(labelSpan);
+          tdPriority.appendChild(prioritySpan);
+          tr.appendChild(tdPriority);
+
+          const tdScore = document.createElement("td");
+          tdScore.innerHTML = '<span class="score-chip">Nota: ' + prio.score.toFixed(1) + "</span>";
+          tr.appendChild(tdScore);
+
+          const tdDims = document.createElement("td");
+          const dimSpan = document.createElement("span");
+          dimSpan.className = "dim-chip";
+          dimSpan.textContent =
+            "R:" + task.retorno +
+            " • E:" + task.estrategico +
+            " • I:" + task.impacto +
+            " • U:" + task.urgencia +
+            " • Ef:" + task.esforco +
+            " • En:" + task.energia;
+          tdDims.appendChild(dimSpan);
+          tr.appendChild(tdDims);
+
+          const tdActions = document.createElement("td");
+          tdActions.style.textAlign = "right";
+          const editBtn = document.createElement("button");
+          editBtn.type = "button";
+          editBtn.className = "btn-ghost btn-small";
+          editBtn.textContent = "Editar";
+          editBtn.addEventListener("click", () => {
+            enterEditMode(task.id);
+          });
+
+          const deleteBtn = document.createElement("button");
+          deleteBtn.type = "button";
+          deleteBtn.className = "btn-danger btn-small";
+          deleteBtn.textContent = "Remover";
+          deleteBtn.addEventListener("click", () => {
+            if (confirm("Remover esta tarefa?")) {
+              deleteTask(task.id);
+            }
+          });
+
+          tdActions.appendChild(editBtn);
+          tdActions.appendChild(deleteBtn);
+          tr.appendChild(tdActions);
+
+          tbody.appendChild(tr);
+        });
+      }
+
+      function syncCategoryFilterOptions() {
+        const select = document.getElementById("filter-category");
+        const current = select.value;
+
+        const categories = Array.from(
+          new Set(
+            state.tasks
+              .map((t) => t.category || "")
+              .filter((c) => c.trim().length > 0)
+          )
+        ).sort((a, b) => a.localeCompare(b, "pt-BR"));
+
+        select.innerHTML = "";
+        const optAll = document.createElement("option");
+        optAll.value = "todas";
+        optAll.textContent = "Todas";
+        select.appendChild(optAll);
+
+        categories.forEach((cat) => {
+          const opt = document.createElement("option");
+          opt.value = cat;
+          opt.textContent = cat;
+          select.appendChild(opt);
+        });
+
+        if (categories.includes(current)) {
+          select.value = current;
+        } else {
+          select.value = "todas";
+          state.filters.category = "todas";
+        }
+      }
+
+      function resetForm() {
+        const form = document.getElementById("task-form");
+        form.reset();
+        document.getElementById("task-id").value = "";
+        document.getElementById("score-retorno").value = 0;
+        document.getElementById("score-estrategico").value = 0;
+        document.getElementById("score-impacto").value = 0;
+        document.getElementById("score-urgencia").value = 0;
+        document.getElementById("score-esforco").value = 0;
+        document.getElementById("score-energia").value = 0;
+        state.editingTaskId = null;
+        document.getElementById("edit-indicator").style.display = "none";
+        document.getElementById("btn-submit").textContent = "Salvar tarefa";
+      }
+
+      function enterEditMode(taskId) {
+        const task = state.tasks.find((t) => t.id === taskId);
+        if (!task) return;
+
+        state.editingTaskId = taskId;
+
+        document.getElementById("task-id").value = task.id;
+        document.getElementById("task-name").value = task.name;
+        document.getElementById("task-category").value = task.category || "";
+        document.getElementById("score-retorno").value = task.retorno;
+        document.getElementById("score-estrategico").value = task.estrategico;
+        document.getElementById("score-impacto").value = task.impacto;
+        document.getElementById("score-urgencia").value = task.urgencia;
+        document.getElementById("score-esforco").value = task.esforco;
+        document.getElementById("score-energia").value = task.energia;
+
+        document.getElementById("edit-indicator").style.display = "block";
+        document.getElementById("btn-submit").textContent = "Atualizar tarefa";
+
+        document.getElementById("task-name").scrollIntoView({ behavior: "smooth", block: "center" });
+        document.getElementById("task-name").focus();
+      }
+
+      function deleteTask(taskId) {
+        state.tasks = state.tasks.filter((t) => t.id !== taskId);
+        if (state.editingTaskId === taskId) {
+          resetForm();
+        }
+        saveTasks();
+        syncCategoryFilterOptions();
+        renderSummary();
+        renderDashboard();
+        renderTasks();
+      }
+
+      function upsertTaskFromForm() {
+        const id = document.getElementById("task-id").value || null;
+        const name = document.getElementById("task-name").value.trim();
+        if (!name) {
+          document.getElementById("task-name").focus();
+          return;
+        }
+
+        const category = document.getElementById("task-category").value.trim();
+        const retorno = parseIntField("score-retorno");
+        const estrategico = parseIntField("score-estrategico");
+        const impacto = parseIntField("score-impacto");
+        const urgencia = parseIntField("score-urgencia");
+        const esforco = parseIntField("score-esforco");
+        const energia = parseIntField("score-energia");
+
+        const nowIso = new Date().toISOString();
+
+        if (id) {
+          const idx = state.tasks.findIndex((t) => t.id === id);
+          if (idx !== -1) {
+            state.tasks[idx] = {
+              ...state.tasks[idx],
+              name,
+              category,
+              retorno,
+              estrategico,
+              impacto,
+              urgencia,
+              esforco,
+              energia,
+              updatedAt: nowIso,
+            };
+          }
+        } else {
+          const newTask = {
+            id: self.crypto && crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2),
+            name,
+            category,
+            retorno,
+            estrategico,
+            impacto,
+            urgencia,
+            esforco,
+            energia,
+            createdAt: nowIso,
+            updatedAt: nowIso,
+          };
+          state.tasks.push(newTask);
+        }
+
+        saveTasks();
+        syncCategoryFilterOptions();
+        renderSummary();
+        renderDashboard();
+        renderTasks();
+        resetForm();
+      }
+
+      function attachEventListeners() {
+        const form = document.getElementById("task-form");
+        const btnClear = document.getElementById("btn-clear");
+        const searchInput = document.getElementById("filter-search");
+        const categorySelect = document.getElementById("filter-category");
+        const prioritySelect = document.getElementById("filter-priority");
+        const btnClearFilters = document.getElementById("btn-clear-filters");
+
+        form.addEventListener("submit", function(e) {
+          e.preventDefault();
+          upsertTaskFromForm();
+        });
+
+        btnClear.addEventListener("click", function() {
+          resetForm();
+        });
+
+        searchInput.addEventListener("input", function() {
+          state.filters.search = searchInput.value;
+          renderTasks();
+        });
+
+        categorySelect.addEventListener("change", function() {
+          state.filters.category = categorySelect.value;
+          renderTasks();
+        });
+
+        prioritySelect.addEventListener("change", function() {
+          state.filters.priority = prioritySelect.value;
+          renderTasks();
+        });
+
+        btnClearFilters.addEventListener("click", function() {
+          state.filters.search = "";
+          state.filters.category = "todas";
+          state.filters.priority = "todas";
+          searchInput.value = "";
+          categorySelect.value = "todas";
+          prioritySelect.value = "todas";
+          renderTasks();
+        });
+      }
+
+      document.addEventListener("DOMContentLoaded", function() {
+        state.tasks = loadTasks();
+        attachEventListeners();
+        syncCategoryFilterOptions();
+        renderSummary();
+        renderDashboard();
+        renderTasks();
+      });
+    })();
+  </script>
+<script>if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("./service-worker.js")
+    .then(() => console.log("Service Worker registrado."))
+    .catch(err => console.error("Erro ao registrar Service Worker:", err));
+}
+</script></body>
+</html>
