@@ -7,7 +7,8 @@
 <title>Priorizador 3D Pro</title>
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <link href="css/style.css" rel="stylesheet"/>
-<link href="manifest.json" rel="manifest"/></head>
+<link href="manifest.json" rel="manifest"/><script src="backup.js"></script>
+</head>
 <body>
 <div class="app-shell">
 <header>
@@ -255,7 +256,7 @@
         }
       }
 
-      function saveTasks() {
+      function saveTasks(); triggerAutoBackup() {
         try {
           localStorage.setItem(STORAGE_KEY, JSON.stringify(state.tasks));
         } catch (e) {
@@ -548,7 +549,7 @@
         if (state.editingTaskId === taskId) {
           resetForm();
         }
-        saveTasks();
+        saveTasks(); triggerAutoBackup();
         syncCategoryFilterOptions();
         renderSummary();
         renderDashboard();
@@ -606,7 +607,7 @@
           state.tasks.push(newTask);
         }
 
-        saveTasks();
+        saveTasks(); triggerAutoBackup();
         syncCategoryFilterOptions();
         renderSummary();
         renderDashboard();
